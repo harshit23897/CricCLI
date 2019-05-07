@@ -25,8 +25,8 @@ def find_live_matches():
         url = str(link.get('href'))
         title = link.get('title')
         # Only take live matches.
-        # if url.startswith("/live-cricket-scores/") and title is not None and "live" in str(title).lower():
-        if url.startswith("/live-cricket-scores/") and title is not None:
+        if url.startswith("/live-cricket-scores/") and title is not None and "live" in str(title).lower():
+            # if url.startswith("/live-cricket-scores/") and title is not None:
             live_matches.append((url[20:], title))
 
     # Remove duplicate links
@@ -35,9 +35,7 @@ def find_live_matches():
     return json.dumps(live_matches)
 
 
-def fetch_live_match_updates_per_over(match):
-    next_call = time.time()
-
+def fetch_live_match_updates_after_every_over(match):
     current_match = []
 
     while True:
@@ -59,12 +57,7 @@ def fetch_live_match_updates_per_over(match):
 
         flag = 0
 
-        if len(current_match) == 0:
-            current_match.append(team)
-            current_match.append(score)
-            current_match.append(overs)
-            flag = flag + 1
-        elif current_match[2] != overs or current_match[0] != team:
+        if len(current_match) == 0 or current_match[2] != overs:
             current_match = []
             current_match.append(team)
             current_match.append(score)
@@ -73,16 +66,131 @@ def fetch_live_match_updates_per_over(match):
 
         # Over is completed
         if flag and "." not in overs:
-            print("\nTeam                                  Score               Overs")
-            print(team + ' ' * (38 - len(team)) + score +
-                  ' ' * (20 - len(score)) + overs + "\n")
             os.system("""
               osascript -e 'display notification "{}" with title "{}"'
               """.format("After " + overs + " overs, " + score, team))
 
-        next_call = next_call + 30
+        time.sleep(30)
 
-        time.sleep(next_call - time.time())
+
+def fetch_live_match_updates_after_every_ball(match):
+    current_match = []
+
+    while True:
+        r = http.request('GET', cricbuzz_base_url +
+                         "live-cricket-scorecard" + match[0])
+        soup = BeautifulSoup(r.data, 'html.parser')
+
+        full_score = soup.find('span', class_="pull-right")
+        if full_score is None:
+            print("Sorry! Unable to fetch score!")
+
+        # Processing and cleaning.
+        team = full_score.find_previous_sibling('span')
+        team = team.text.strip()
+
+        full_score = full_score.text.strip()
+        score, overs = full_score.split('\xa0')
+        overs = overs[1:-1]
+
+        flag = 0
+
+        if len(current_match) == 0 or current_match[2] != overs:
+            current_match = []
+            current_match.append(team)
+            current_match.append(score)
+            current_match.append(overs)
+            flag = flag + 1
+
+        # Over is completed
+        if flag:
+            os.system("""
+              osascript -e 'display notification "{}" with title "{}"'
+              """.format("After " + overs + " overs, " + score, team))
+
+        time.sleep(5)
+
+
+def fetch_live_match_updates_after_every_wicket(match):
+    current_match = []
+
+    while True:
+        r = http.request('GET', cricbuzz_base_url +
+                         "live-cricket-scorecard" + match[0])
+        soup = BeautifulSoup(r.data, 'html.parser')
+
+        full_score = soup.find('span', class_="pull-right")
+        if full_score is None:
+            print("Sorry! Unable to fetch score!")
+
+        # Processing and cleaning.
+        team = full_score.find_previous_sibling('span')
+        team = team.text.strip()
+
+        full_score = full_score.text.strip()
+        score, overs = full_score.split('\xa0')
+        overs = overs[1:-1]
+
+        flag = 0
+        if len(current_match) == 0:
+            current_match.append(team)
+            current_match.append(score)
+            current_match.append(overs)
+        elif current_match[2] != overs and score[-1:] > current_match[1][-1:]:
+            current_match = []
+            current_match.append(team)
+            current_match.append(score)
+            current_match.append(overs)
+            flag = flag + 1
+
+        # Over is completed
+        if flag:
+            os.system("""
+              osascript -e 'display notification "{}" with title "{}"'
+              """.format("After " + overs + " overs, " + score, team))
+
+        time.sleep(5)
+
+
+def fetch_live_match_updates_after_every_four_or_six(match):
+    current_match = []
+
+    while True:
+        r = http.request('GET', cricbuzz_base_url +
+                         "live-cricket-scorecard" + match[0])
+        soup = BeautifulSoup(r.data, 'html.parser')
+
+        full_score = soup.find('span', class_="pull-right")
+        if full_score is None:
+            print("Sorry! Unable to fetch score!")
+
+        # Processing and cleaning.
+        team = full_score.find_previous_sibling('span')
+        team = team.text.strip()
+
+        full_score = full_score.text.strip()
+        score, overs = full_score.split('\xa0')
+        overs = overs[1:-1]
+
+        flag = 0
+        if len(current_match) == 0:
+            current_match.append(team)
+            current_match.append(score)
+            current_match.append(overs)
+        elif current_match[2] != overs and int(score[-2:]) - int(current_match[1][-2:]) in [4, 6]:
+            current_match = []
+            current_match.append(team)
+            current_match.append(score)
+            current_match.append(overs)
+            flag = flag + 1
+
+        # Over is completed
+        if flag:
+            os.system("""
+              osascript -e 'display notification "{}" with title "{}"'
+              """.format("After " + overs + " overs, " + score, team))
+
+        time.sleep(5)
 
 
 def helper():
@@ -92,16 +200,43 @@ def helper():
     print("\nSelect which match you want to follow:\n")
     for idx, match in enumerate(live_matches):
         print(idx+1, match[1])
+    selection = input()
 
-    selection = int(input())
+    try:
+        selection = int(selection)
+    except ValueError:
+        print("Please enter an integer.")
+        return
 
     if selection < 1 or selection > len(live_matches):
         print("Invalid input.")
         return
 
-    timerThread = threading.Thread(
-        target=fetch_live_match_updates_per_over, kwargs=dict(match=live_matches[selection-1]))
-    timerThread.start()
+    print("\nWhich type of summary you want to see:\n\n1. After every over.\n2. After every ball.\n3. After every 4/6.\n4. After every wicket.\n5. After every 4/6/wicket/over.")
+    summary_type = input()
+
+    try:
+        summary_type = int(summary_type)
+    except ValueError:
+        print("Please enter an integer.")
+        return
+
+    if summary_type == 1:
+        timerThread = threading.Thread(
+            target=fetch_live_match_updates_after_every_over, kwargs=dict(match=live_matches[selection-1]))
+        timerThread.start()
+    elif summary_type == 2:
+        timerThread = threading.Thread(
+            target=fetch_live_match_updates_after_every_ball, kwargs=dict(match=live_matches[selection-1]))
+        timerThread.start()
+    elif summary_type == 3:
+        timerThread = threading.Thread(
+            target=fetch_live_match_updates_after_every_four_or_six, kwargs=dict(match=live_matches[selection-1]))
+        timerThread.start()
+    elif summary_type == 4:
+        timerThread = threading.Thread(
+            target=fetch_live_match_updates_after_every_wicket, kwargs=dict(match=live_matches[selection-1]))
+        timerThread.start()
 
 
 if __name__ == "__main__":
