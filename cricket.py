@@ -25,8 +25,8 @@ def find_live_matches():
         url = str(link.get('href'))
         title = link.get('title')
         # Only take live matches.
-        # if url.startswith("/live-cricket-scores/") and title is not None and "live" in str(title).lower():
-        if url.startswith("/live-cricket-scores/") and title is not None:
+        if url.startswith("/live-cricket-scores/") and title is not None and "live" in str(title).lower():
+            # if url.startswith("/live-cricket-scores/") and title is not None:
             live_matches.append((url[20:], title))
 
     # Remove duplicate links
@@ -71,7 +71,7 @@ def fetch_live_match_updates_after_every_over(match):
               osascript -e 'display notification "{}" with title "{}"'
               """.format("After " + overs + " overs, " + score, team))
 
-        time.sleep(30)
+        time.sleep(5)
 
 
 def fetch_live_match_updates_after_every_ball(match):
@@ -216,8 +216,7 @@ def fetch_live_match_updates_after_every_major_moment(match):
         overs = overs[1:-1]
 
         flag = 0
-
-        if len(current_match) > 0 and (current_match[2] != overs or int(score.split('-')[0]) - int(current_match[1].split('-')[0]) in [4, 6] or score[-1:] > current_match[1][-1:]):
+        if len(current_match) > 0 and current_match[2] != overs and ('.' not in overs or int(score.split('-')[0]) - int(current_match[1].split('-')[0]) in [4, 6] or score[-1:] > current_match[1][-1:]):
             flag = flag + 1
 
         current_match = []
