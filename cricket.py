@@ -35,6 +35,43 @@ def find_live_matches():
     return json.dumps(live_matches)
 
 
+def print_score(batsmen_info, team, score, overs):
+    os.system("""
+              osascript -e 'display notification "{}" with title "{}"'
+              """.format(batsmen_info[0][0] + " " + batsmen_info[0][1] + "(" + batsmen_info[0][2] + ")\n" + batsmen_info[1][0] + " " + batsmen_info[1][1] + "(" + batsmen_info[1][2] + ")", team + "    " + score + " (" + overs + ")"))
+
+
+def find_information(full_score):
+    '''
+        Processing and cleaning.
+    '''
+    team = full_score.find_previous_sibling('span')
+    team = team.text.strip()
+
+    full_score = full_score.text.strip()
+    score, overs = full_score.split('\xa0')
+    overs = overs[1:-1]
+
+    return [full_score, score, overs, team]
+
+
+def find_batsmen_information(battings):
+    '''
+        Extracting batsmen name, score and no. of balls faced.    
+    '''
+    batsmen_information = []
+
+    for batting in battings:
+        batsmen = batting.find_parent('div').find_parent('div')
+        batsmen_name = batsmen.find('a').text
+        batsmen_score = batsmen.find_all('div')[2].text
+        batsmen_balls_faced = batsmen.find_all('div')[3].text
+        batsmen_information.append(
+            (batsmen_name, batsmen_score, batsmen_balls_faced))
+
+    return batsmen_information
+
+
 def fetch_live_match_updates_after_every_over(match):
     current_match = []
 
@@ -48,25 +85,10 @@ def fetch_live_match_updates_after_every_over(match):
             print("Sorry! Unable to fetch score!")
             return
 
-        # Processing and cleaning.
-        team = full_score.find_previous_sibling('span')
-        team = team.text.strip()
-
-        full_score = full_score.text.strip()
-        score, overs = full_score.split('\xa0')
-        overs = overs[1:-1]
-
         battings = soup.find_all(
             "span", text='batting')
-        batsmen_information = []
-
-        for batting in battings:
-            batsmen = batting.find_parent('div').find_parent('div')
-            batsmen_name = batsmen.find('a').text
-            batsmen_score = batsmen.find_all('div')[2].text
-            batsmen_balls_faced = batsmen.find_all('div')[3].text
-            batsmen_information.append(
-                (batsmen_name, batsmen_score, batsmen_balls_faced))
+        batsmen_information = find_batsmen_information(battings)
+        [full_score, score, overs, team] = find_information(full_score)
 
         flag = 0
 
@@ -75,14 +97,12 @@ def fetch_live_match_updates_after_every_over(match):
             current_match.append(team)
             current_match.append(score)
             current_match.append(overs)
-            flag = flag + 1
+            if '.' not in current_match[2]:
+                flag = flag + 1
 
         # Over is completed
-        # Over is completed
         if flag:
-            os.system("""
-              osascript -e 'display notification "{}" with title "{}"'
-              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
+            print_score(batsmen_information, team, score, overs)
 
         time.sleep(5)
 
@@ -96,29 +116,15 @@ def fetch_live_match_updates_after_every_ball(match):
         soup = BeautifulSoup(r.data, 'html.parser')
 
         full_score = soup.find('span', class_="pull-right")
-        battings = soup.find_all(
-            "span", text='batting')
-        batsmen_information = []
-
-        for batting in battings:
-            batsmen = batting.find_parent('div').find_parent('div')
-            batsmen_name = batsmen.find('a').text
-            batsmen_score = batsmen.find_all('div')[2].text
-            batsmen_balls_faced = batsmen.find_all('div')[3].text
-            batsmen_information.append(
-                (batsmen_name, batsmen_score, batsmen_balls_faced))
 
         if full_score is None:
             print("Sorry! Unable to fetch score!")
             return
 
-        # Processing and cleaning.
-        team = full_score.find_previous_sibling('span')
-        team = team.text.strip()
-
-        full_score = full_score.text.strip()
-        score, overs = full_score.split('\xa0')
-        overs = overs[1:-1]
+        battings = soup.find_all(
+            "span", text='batting')
+        batsmen_information = find_batsmen_information(battings)
+        [full_score, score, overs, team] = find_information(full_score)
 
         flag = 0
 
@@ -131,9 +137,7 @@ def fetch_live_match_updates_after_every_ball(match):
 
         # Over is completed
         if flag:
-            os.system("""
-              osascript -e 'display notification "{}" with title "{}"'
-              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
+            print_score(batsmen_information, team, score, overs)
 
         time.sleep(5)
 
@@ -151,25 +155,10 @@ def fetch_live_match_updates_after_every_wicket(match):
             print("Sorry! Unable to fetch score!")
             return
 
-        # Processing and cleaning.
-        team = full_score.find_previous_sibling('span')
-        team = team.text.strip()
-
-        full_score = full_score.text.strip()
-        score, overs = full_score.split('\xa0')
-        overs = overs[1:-1]
-
         battings = soup.find_all(
             "span", text='batting')
-        batsmen_information = []
-
-        for batting in battings:
-            batsmen = batting.find_parent('div').find_parent('div')
-            batsmen_name = batsmen.find('a').text
-            batsmen_score = batsmen.find_all('div')[2].text
-            batsmen_balls_faced = batsmen.find_all('div')[3].text
-            batsmen_information.append(
-                (batsmen_name, batsmen_score, batsmen_balls_faced))
+        batsmen_information = find_batsmen_information(battings)
+        [full_score, score, overs, team] = find_information(full_score)
 
         flag = 0
         if len(current_match) == 0:
@@ -185,9 +174,7 @@ def fetch_live_match_updates_after_every_wicket(match):
 
         # Over is completed
         if flag:
-            os.system("""
-              osascript -e 'display notification "{}" with title "{}"'
-              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
+            print_score(batsmen_information, team, score, overs)
 
         time.sleep(5)
 
@@ -205,25 +192,10 @@ def fetch_live_match_updates_after_every_four_or_six(match):
             print("Sorry! Unable to fetch score!")
             return
 
-        # Processing and cleaning.
-        team = full_score.find_previous_sibling('span')
-        team = team.text.strip()
-
-        full_score = full_score.text.strip()
-        score, overs = full_score.split('\xa0')
-        overs = overs[1:-1]
-
         battings = soup.find_all(
             "span", text='batting')
-        batsmen_information = []
-
-        for batting in battings:
-            batsmen = batting.find_parent('div').find_parent('div')
-            batsmen_name = batsmen.find('a').text
-            batsmen_score = batsmen.find_all('div')[2].text
-            batsmen_balls_faced = batsmen.find_all('div')[3].text
-            batsmen_information.append(
-                (batsmen_name, batsmen_score, batsmen_balls_faced))
+        batsmen_information = find_batsmen_information(battings)
+        [full_score, score, overs, team] = find_information(full_score)
 
         flag = 0
         if len(current_match) > 0 and current_match[2] != overs and int(score.split('-')[0]) - int(current_match[1].split('-')[0]) in [4, 6]:
@@ -236,9 +208,7 @@ def fetch_live_match_updates_after_every_four_or_six(match):
 
         # Over is completed
         if flag:
-            os.system("""
-              osascript -e 'display notification "{}" with title "{}"'
-              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
+            print_score(batsmen_information, team, score, overs)
 
         time.sleep(5)
 
@@ -256,25 +226,10 @@ def fetch_live_match_updates_after_every_major_moment(match):
             print("Sorry! Unable to fetch score!")
             return
 
-        # Processing and cleaning.
-        team = full_score.find_previous_sibling('span')
-        team = team.text.strip()
-
-        full_score = full_score.text.strip()
-        score, overs = full_score.split('\xa0')
-        overs = overs[1:-1]
-
         battings = soup.find_all(
             "span", text='batting')
-        batsmen_information = []
-
-        for batting in battings:
-            batsmen = batting.find_parent('div').find_parent('div')
-            batsmen_name = batsmen.find('a').text
-            batsmen_score = batsmen.find_all('div')[2].text
-            batsmen_balls_faced = batsmen.find_all('div')[3].text
-            batsmen_information.append(
-                (batsmen_name, batsmen_score, batsmen_balls_faced))
+        batsmen_information = find_batsmen_information(battings)
+        [full_score, score, overs, team] = find_information(full_score)
 
         flag = 0
         if len(current_match) > 0 and current_match[2] != overs and ('.' not in overs or int(score.split('-')[0]) - int(current_match[1].split('-')[0]) in [4, 6] or score[-1:] > current_match[1][-1:]):
@@ -287,9 +242,7 @@ def fetch_live_match_updates_after_every_major_moment(match):
 
         # Major momment has happened
         if flag:
-            os.system("""
-              osascript -e 'display notification "{}" with title "{}"'
-              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
+            print_score(batsmen_information, team, score, overs)
 
         time.sleep(5)
 
