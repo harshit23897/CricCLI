@@ -56,6 +56,18 @@ def fetch_live_match_updates_after_every_over(match):
         score, overs = full_score.split('\xa0')
         overs = overs[1:-1]
 
+        battings = soup.find_all(
+            "span", text='batting')
+        batsmen_information = []
+
+        for batting in battings:
+            batsmen = batting.find_parent('div').find_parent('div')
+            batsmen_name = batsmen.find('a').text
+            batsmen_score = batsmen.find_all('div')[2].text
+            batsmen_balls_faced = batsmen.find_all('div')[3].text
+            batsmen_information.append(
+                (batsmen_name, batsmen_score, batsmen_balls_faced))
+
         flag = 0
 
         if len(current_match) == 0 or current_match[2] != overs:
@@ -66,10 +78,11 @@ def fetch_live_match_updates_after_every_over(match):
             flag = flag + 1
 
         # Over is completed
-        if flag and "." not in overs:
+        # Over is completed
+        if flag:
             os.system("""
               osascript -e 'display notification "{}" with title "{}"'
-              """.format("After " + overs + " overs, " + score, team))
+              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
 
         time.sleep(5)
 
@@ -83,6 +96,18 @@ def fetch_live_match_updates_after_every_ball(match):
         soup = BeautifulSoup(r.data, 'html.parser')
 
         full_score = soup.find('span', class_="pull-right")
+        battings = soup.find_all(
+            "span", text='batting')
+        batsmen_information = []
+
+        for batting in battings:
+            batsmen = batting.find_parent('div').find_parent('div')
+            batsmen_name = batsmen.find('a').text
+            batsmen_score = batsmen.find_all('div')[2].text
+            batsmen_balls_faced = batsmen.find_all('div')[3].text
+            batsmen_information.append(
+                (batsmen_name, batsmen_score, batsmen_balls_faced))
+
         if full_score is None:
             print("Sorry! Unable to fetch score!")
             return
@@ -108,7 +133,7 @@ def fetch_live_match_updates_after_every_ball(match):
         if flag:
             os.system("""
               osascript -e 'display notification "{}" with title "{}"'
-              """.format("After " + overs + " overs, " + score, team))
+              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
 
         time.sleep(5)
 
@@ -134,6 +159,18 @@ def fetch_live_match_updates_after_every_wicket(match):
         score, overs = full_score.split('\xa0')
         overs = overs[1:-1]
 
+        battings = soup.find_all(
+            "span", text='batting')
+        batsmen_information = []
+
+        for batting in battings:
+            batsmen = batting.find_parent('div').find_parent('div')
+            batsmen_name = batsmen.find('a').text
+            batsmen_score = batsmen.find_all('div')[2].text
+            batsmen_balls_faced = batsmen.find_all('div')[3].text
+            batsmen_information.append(
+                (batsmen_name, batsmen_score, batsmen_balls_faced))
+
         flag = 0
         if len(current_match) == 0:
             current_match.append(team)
@@ -150,7 +187,7 @@ def fetch_live_match_updates_after_every_wicket(match):
         if flag:
             os.system("""
               osascript -e 'display notification "{}" with title "{}"'
-              """.format("After " + overs + " overs, " + score, team))
+              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
 
         time.sleep(5)
 
@@ -176,6 +213,18 @@ def fetch_live_match_updates_after_every_four_or_six(match):
         score, overs = full_score.split('\xa0')
         overs = overs[1:-1]
 
+        battings = soup.find_all(
+            "span", text='batting')
+        batsmen_information = []
+
+        for batting in battings:
+            batsmen = batting.find_parent('div').find_parent('div')
+            batsmen_name = batsmen.find('a').text
+            batsmen_score = batsmen.find_all('div')[2].text
+            batsmen_balls_faced = batsmen.find_all('div')[3].text
+            batsmen_information.append(
+                (batsmen_name, batsmen_score, batsmen_balls_faced))
+
         flag = 0
         if len(current_match) > 0 and current_match[2] != overs and int(score.split('-')[0]) - int(current_match[1].split('-')[0]) in [4, 6]:
             flag = flag + 1
@@ -189,7 +238,7 @@ def fetch_live_match_updates_after_every_four_or_six(match):
         if flag:
             os.system("""
               osascript -e 'display notification "{}" with title "{}"'
-              """.format("After " + overs + " overs, " + score, team))
+              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
 
         time.sleep(5)
 
@@ -215,6 +264,18 @@ def fetch_live_match_updates_after_every_major_moment(match):
         score, overs = full_score.split('\xa0')
         overs = overs[1:-1]
 
+        battings = soup.find_all(
+            "span", text='batting')
+        batsmen_information = []
+
+        for batting in battings:
+            batsmen = batting.find_parent('div').find_parent('div')
+            batsmen_name = batsmen.find('a').text
+            batsmen_score = batsmen.find_all('div')[2].text
+            batsmen_balls_faced = batsmen.find_all('div')[3].text
+            batsmen_information.append(
+                (batsmen_name, batsmen_score, batsmen_balls_faced))
+
         flag = 0
         if len(current_match) > 0 and current_match[2] != overs and ('.' not in overs or int(score.split('-')[0]) - int(current_match[1].split('-')[0]) in [4, 6] or score[-1:] > current_match[1][-1:]):
             flag = flag + 1
@@ -224,11 +285,11 @@ def fetch_live_match_updates_after_every_major_moment(match):
         current_match.append(score)
         current_match.append(overs)
 
-        # Over is completed
+        # Major momment has happened
         if flag:
             os.system("""
               osascript -e 'display notification "{}" with title "{}"'
-              """.format("After " + overs + " overs, " + score, team))
+              """.format(batsmen_information[0][0] + " " + batsmen_information[0][1] + "(" + batsmen_information[0][2] + ")\n" + batsmen_information[1][0] + " " + batsmen_information[1][1] + "(" + batsmen_information[1][2] + ")", team + "    " + score + " (" + overs + ")"))
 
         time.sleep(5)
 
